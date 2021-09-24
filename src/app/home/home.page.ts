@@ -1,4 +1,6 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { of } from 'rxjs';
+import { delay, take, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -9,6 +11,8 @@ import { environment } from '../../environments/environment';
 export class HomePage implements AfterViewInit {
   @ViewChild('myCesium')
   public myCesium: ElementRef;
+  public viewer: any;
+  public osmBuildingInit = false;
 
   constructor() {
   }
@@ -17,7 +21,7 @@ export class HomePage implements AfterViewInit {
     if (environment.cesiumAccessToken) {
       Cesium.Ion.defaultAccessToken = environment.cesiumAccessToken;
     }
-    const viewer = new Cesium.Viewer(this.myCesium.nativeElement, {
+    this.viewer = new Cesium.Viewer(this.myCesium.nativeElement, {
       //Use Cesium World Terrain
       terrainProvider: Cesium.createWorldTerrain(),
       //Hide the base layer picker
@@ -30,4 +34,26 @@ export class HomePage implements AfterViewInit {
     });
   }
 
+  public letsGo() {
+    const slow$ = of(this.viewer);
+    slow$
+      .pipe(
+        take(1),
+        tap(() => this.viewer.scene.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(-74.019, 40.6912, 750),
+          orientation: {
+            heading: Cesium.Math.toRadians(20),
+            pitch: Cesium.Math.toRadians(-20),
+          },
+        })),
+        delay(2000),
+        tap(() => {
+          if (!this.osmBuildingInit) {
+            this.viewer.scene.primitives.add(Cesium.createOsmBuildings());
+          }
+        }),
+        tap(() => this.osmBuildingInit = true),
+      )
+      .subscribe();
+  }
 }
