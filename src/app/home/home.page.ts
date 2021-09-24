@@ -14,7 +14,9 @@ export class HomePage implements AfterViewInit {
   }
 
   public ngAfterViewInit(): void {
-    Cesium.Ion.defaultAccessToken = environment.cesiumAccessToken;
+    if (environment.cesiumAccessToken) {
+      Cesium.Ion.defaultAccessToken = environment.cesiumAccessToken;
+    }
     const viewer = new Cesium.Viewer(this.myCesium.nativeElement, {
       //Use Cesium World Terrain
       terrainProvider: Cesium.createWorldTerrain(),
